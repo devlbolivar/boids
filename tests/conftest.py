@@ -54,6 +54,13 @@ async def test_engine():
         await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON agent_runs TO boids_app"))
         await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON campaigns TO boids_app"))
         await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON leads TO boids_app"))
+        await conn.execute(text("ALTER TABLE knowledge_documents ENABLE ROW LEVEL SECURITY"))
+        await conn.execute(text("ALTER TABLE knowledge_documents FORCE ROW LEVEL SECURITY"))
+        await conn.execute(text("""
+            CREATE POLICY knowledge_isolation ON knowledge_documents
+                USING (tenant_id = current_setting('app.tenant_id')::UUID)
+        """))
+        await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON knowledge_documents TO boids_app"))
 
     yield engine, session_factory
 

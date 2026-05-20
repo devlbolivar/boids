@@ -60,3 +60,20 @@ test-agent-m4: test-services
 
 test-agents: test-services
 	pytest tests/unit/ tests/integration/ -v --tb=short -m "not slow"
+
+# M5: RAG Knowledge Base targets
+test-agent-m5: test-services
+	pytest tests/unit/test_chunker.py \
+	       tests/unit/test_qdrant_collection_naming.py \
+	       tests/unit/test_build_rag_query.py \
+	       tests/integration/test_knowledge_pipeline.py \
+	       -v --tb=short
+
+qdrant-up:
+	docker run -d -p 6333:6333 -p 6334:6334 \
+	    -v qdrant_storage:/qdrant/storage \
+	    --name boids_qdrant \
+	    qdrant/qdrant
+
+qdrant-down:
+	docker stop boids_qdrant && docker rm boids_qdrant

@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     # Apollo.io API key (global, shared plan). Tenants can override via api_keys_enc.
     APOLLO_API_KEY: str = ""
 
+    # OpenAI API key for embeddings
+    OPENAI_API_KEY: str = ""
+
+    # Qdrant vector database URL
+    QDRANT_URL: str = "http://localhost:6333"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
