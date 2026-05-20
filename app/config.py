@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     # Must be 32-byte URL-safe base64-encoded key
     MASTER_ENCRYPTION_KEY: str = "3k4b5d6e7f8g9h0i1j2k3l4m5n6o7p8q9r0s1t2u3v4="
 
+    # Apollo.io API key (global, shared plan). Tenants can override via api_keys_enc.
+    APOLLO_API_KEY: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

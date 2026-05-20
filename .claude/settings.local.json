@@ -8,7 +8,13 @@
       "Bash(Select-Object -Property FullName, PSIsContainer)",
       "Bash(Sort-Object FullName)",
       "Bash(Format-Table -AutoSize)",
-      "PowerShell(Get-ChildItem *)"
+      "PowerShell(Get-ChildItem *)",
+      "Bash(Get-ChildItem -Recurse -File)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "PowerShell($env:PATH)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(python -m pip install anthropic httpx 2>&1 | Select-Object -Last 10)"
     ]
   }
 }

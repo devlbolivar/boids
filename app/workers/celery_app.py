@@ -5,7 +5,7 @@ celery = Celery(
     "boids",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.workers.tasks.health"]
+    include=["app.workers.tasks.health", "app.workers.tasks.lead_finder"]
 )
 
 celery.conf.update(

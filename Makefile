@@ -35,3 +35,17 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type d -name .pytest_cache -exec rm -rf {} +
 	rm -rf htmlcov/ .coverage
+
+# M3: Lead Finder Agent targets
+test-fast: test-services
+	pytest tests/ -v --tb=short -m "not slow"
+
+test-slow: test-services
+	pytest tests/ -v --tb=short -m "slow"
+
+test-agent-m3: test-services
+	pytest tests/unit/test_icp_mapper.py \
+	       tests/unit/test_lead_normalizer.py \
+	       tests/unit/test_lead_finder_agent.py \
+	       tests/integration/test_lead_finder_endpoint.py \
+	       -v --tb=short

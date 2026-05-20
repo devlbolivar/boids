@@ -1,8 +1,12 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.dependencies import get_tenant_db, get_current_tenant
-from app.campaigns.service import CampaignService
+
 from app.campaigns.schemas import CampaignCreate, CampaignUpdate, CampaignResponse
+from app.campaigns.service import CampaignService
+from app.dependencies import get_tenant_db, get_current_tenant
+from app.workers.tasks.lead_finder import find_leads_for_campaign
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 service = CampaignService()
@@ -66,3 +70,41 @@ async def delete_campaign(
     deleted = await service.delete(db, campaign_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+
+@router.post("/{campaign_id}/run/find-leads", status_code=status.HTTP_202_ACCEPTED)
+async def run_lead_finder(
+    campaign_id: str,
+    tenant_id: str = Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db),
+):
+    """Despacha el Lead Finder Agent de forma asíncrona. Retorna el task_id."""
+    campaign = await service.get(db, campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+    if campaign.status == "done":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Campaign already done")
+
+    await service.update(db, campaign_id, CampaignUpdate(status="running"))
+
+    task = find_leads_for_campaign.delay(campaign_id=campaign_id, tenant_id=tenant_id)
+
+    return {"task_id": task.id, "status": "queued", "message": "Lead Finder Agent dispatched"}
+
+
+@router.get("/{campaign_id}/run/{task_id}/status")
+async def get_task_status(
+    campaign_id: str,
+    task_id: str,
+    _: str = Depends(get_current_tenant),
+):
+    """Polling del estado del task de Celery."""
+    from app.workers.celery_app import celery
+    task = celery.AsyncResult(task_id)
+
+    return {
+        "task_id": task_id,
+        "state": task.state,
+        "result": task.result if task.ready() else None,
+    }
