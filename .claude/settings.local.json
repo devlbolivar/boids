@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -X POST http://localhost:8000/auth/register -H \"Content-Type: application/json\" -d '{\"name\":\"Acme Corp\",\"email\":\"test@acme.com\",\"password\":\"securepass123\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(docker exec boids_web *)"
+    ]
+  }
+}
