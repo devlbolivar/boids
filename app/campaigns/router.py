@@ -7,6 +7,7 @@ from app.campaigns.schemas import CampaignCreate, CampaignUpdate, CampaignRespon
 from app.campaigns.service import CampaignService
 from app.dependencies import get_tenant_db, get_current_tenant
 from app.workers.tasks.lead_finder import find_leads_for_campaign
+from app.workers.tasks.research import research_campaign_leads
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 service = CampaignService()
@@ -91,6 +92,42 @@ async def run_lead_finder(
     task = find_leads_for_campaign.delay(campaign_id=campaign_id, tenant_id=tenant_id)
 
     return {"task_id": task.id, "status": "queued", "message": "Lead Finder Agent dispatched"}
+
+
+@router.post("/{campaign_id}/run/research", status_code=status.HTTP_202_ACCEPTED)
+async def run_research_agent(
+    campaign_id: str,
+    tenant_id: str = Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db),
+):
+    """Despacha el Research Agent para todos los leads 'new' de la campaña."""
+    from sqlalchemy import func, select
+    from app.leads.models import Lead
+
+    campaign = await service.get(db, campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+    result = await db.execute(
+        select(func.count(Lead.id))
+        .where(Lead.campaign_id == campaign_id, Lead.status == "new")
+    )
+    new_leads_count = result.scalar_one()
+
+    if new_leads_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No leads with status 'new' in this campaign. Run find-leads first.",
+        )
+
+    task = research_campaign_leads.delay(campaign_id=campaign_id, tenant_id=tenant_id)
+
+    return {
+        "task_id": task.id,
+        "status": "queued",
+        "leads_queued": new_leads_count,
+        "message": f"Research Agent dispatched for {new_leads_count} leads",
+    }
 
 
 @router.get("/{campaign_id}/run/{task_id}/status")

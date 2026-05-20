@@ -42,11 +42,30 @@ class LeadService:
         result = await db.execute(query)
         return list(result.scalars().all())
 
-    async def update_status(self, db: AsyncSession, lead_id: str, status: str) -> Lead | None:
+    async def get(self, db: AsyncSession, lead_id: str) -> Lead | None:
         result = await db.execute(select(Lead).where(Lead.id == lead_id))
-        lead = result.scalar_one_or_none()
+        return result.scalar_one_or_none()
+
+    async def update_status(self, db: AsyncSession, lead_id: str, status: str) -> Lead | None:
+        lead = await self.get(db, lead_id)
         if not lead:
             return None
+        lead.status = status
+        await db.commit()
+        await db.refresh(lead)
+        return lead
+
+    async def update_research(
+        self,
+        db: AsyncSession,
+        lead_id: str,
+        research_ctx: dict,
+        status: str = "researched",
+    ) -> Lead | None:
+        lead = await self.get(db, lead_id)
+        if not lead:
+            return None
+        lead.research_ctx = research_ctx
         lead.status = status
         await db.commit()
         await db.refresh(lead)

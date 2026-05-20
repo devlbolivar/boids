@@ -14,7 +14,14 @@
       "Bash(Sort-Object)",
       "PowerShell($env:PATH)",
       "PowerShell(Get-Command *)",
-      "PowerShell(python -m pip install anthropic httpx 2>&1 | Select-Object -Last 10)"
+      "PowerShell(python -m pip install anthropic httpx 2>&1 | Select-Object -Last 10)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\" -Recurse -Directory)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\\\\app\" -File | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\" -File | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\\\\tests\\\\unit\" -File | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\\\\tests\\\\integration\" -File | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\\\\app\\\\auth\" -File | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\\\\app\\\\core\" -File | ForEach-Object { $_.Name })"
     ]
   }
 }

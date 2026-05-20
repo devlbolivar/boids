@@ -49,3 +49,14 @@ test-agent-m3: test-services
 	       tests/unit/test_lead_finder_agent.py \
 	       tests/integration/test_lead_finder_endpoint.py \
 	       -v --tb=short
+
+# M4: Research Agent targets
+test-agent-m4: test-services
+	pytest tests/unit/test_research_schemas.py \
+	       tests/unit/test_research_agent.py \
+	       tests/unit/test_research_task.py \
+	       tests/integration/test_research_pipeline.py \
+	       -v --tb=short
+
+test-agents: test-services
+	pytest tests/unit/ tests/integration/ -v --tb=short -m "not slow"
