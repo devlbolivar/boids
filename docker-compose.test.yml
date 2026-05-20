@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: boids
+      POSTGRES_PASSWORD: boids
+      POSTGRES_DB: boids
+    ports:
+      - "5433:5432"
+
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6380:6379"

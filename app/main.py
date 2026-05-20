@@ -8,6 +8,9 @@ from app.dependencies import get_db
 from app.workers.celery_app import celery
 from app.auth.router import router as auth_router
 from app.tenants.router import router as tenants_router
+from app.campaigns.router import router as campaigns_router
+from app.leads.router import router as leads_router
+from app.dashboard.router import router as dashboard_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,6 +39,9 @@ app.add_middleware(
 # Include core routers
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(tenants_router, prefix="/tenants", tags=["Tenants"])
+app.include_router(campaigns_router)
+app.include_router(leads_router)
+app.include_router(dashboard_router)
 
 @app.get("/health", tags=["System"])
 async def health_check(db: AsyncSession = Depends(get_db)):

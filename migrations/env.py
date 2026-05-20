@@ -9,6 +9,8 @@ from app.config import settings
 from app.core.database import Base
 # Import models so they are registered on Base.metadata
 from app.tenants.models import Tenant, AgentRun
+from app.campaigns.models import Campaign
+from app.leads.models import Lead
 
 # this is the Alembic Config object, which provides access to the values within the .ini file in use.
 config = context.config

@@ -3,7 +3,12 @@
     "allow": [
       "Bash(curl -s -X POST http://localhost:8000/auth/register -H \"Content-Type: application/json\" -d '{\"name\":\"Acme Corp\",\"email\":\"test@acme.com\",\"password\":\"securepass123\"}')",
       "Bash(python3 -m json.tool)",
-      "Bash(docker exec boids_web *)"
+      "Bash(docker exec boids_web *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\" -Recurse -Force)",
+      "Bash(Select-Object -Property FullName, PSIsContainer)",
+      "Bash(Sort-Object FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem *)"
     ]
   }
 }

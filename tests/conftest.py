@@ -35,6 +35,25 @@ async def test_engine():
             CREATE POLICY agent_runs_tenant_isolation ON agent_runs
                 USING (tenant_id = current_setting('app.tenant_id')::UUID)
         """))
+        await conn.execute(text("ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY"))
+        await conn.execute(text("ALTER TABLE campaigns FORCE ROW LEVEL SECURITY"))
+        await conn.execute(text("""
+            CREATE POLICY campaigns_isolation ON campaigns
+                USING (tenant_id = current_setting('app.tenant_id')::UUID)
+        """))
+        await conn.execute(text("ALTER TABLE leads ENABLE ROW LEVEL SECURITY"))
+        await conn.execute(text("ALTER TABLE leads FORCE ROW LEVEL SECURITY"))
+        await conn.execute(text("""
+            CREATE POLICY leads_isolation ON leads
+                USING (tenant_id = current_setting('app.tenant_id')::UUID)
+        """))
+        # Superusers bypass RLS unconditionally. Create a non-superuser role so
+        # tenant-scoped sessions can enforce policies during tests.
+        await conn.execute(text("DO $$ BEGIN CREATE ROLE boids_app; EXCEPTION WHEN duplicate_object THEN NULL; END $$"))
+        await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON tenants TO boids_app"))
+        await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON agent_runs TO boids_app"))
+        await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON campaigns TO boids_app"))
+        await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON leads TO boids_app"))
 
     yield engine, session_factory
 
@@ -60,6 +79,8 @@ async def client(test_engine):
 
     async def _override_get_tenant_db(tenant_id: str = Depends(get_current_tenant)):
         async with session_factory() as session:
+            # Use non-superuser role so RLS policies are enforced (superusers bypass RLS).
+            await session.execute(text("SET LOCAL ROLE boids_app"))
             # SET LOCAL doesn't support bind params in PostgreSQL
             await session.execute(text(f"SET LOCAL app.tenant_id = '{tenant_id}'"))
             yield session
@@ -74,3 +95,27 @@ async def client(test_engine):
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def auth_headers(client: AsyncClient):
+    """Registers a tenant and returns its auth headers."""
+    r = await client.post("/auth/register", json={
+        "name": "Test Corp",
+        "email": "test@boids.ai",
+        "password": "testpass123",
+    })
+    token = r.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest_asyncio.fixture
+async def second_auth_headers(client: AsyncClient):
+    """Registers a second tenant for isolation tests."""
+    r = await client.post("/auth/register", json={
+        "name": "Other Corp",
+        "email": "other@boids.ai",
+        "password": "testpass123",
+    })
+    token = r.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
