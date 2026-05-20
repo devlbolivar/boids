@@ -5,7 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.config import settings
 
-TEST_PG_DSN = settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://").replace("boids_db", "boids_test_db")
+TEST_PG_DSN = (
+    settings.DATABASE_URL
+    .replace("postgresql+asyncpg://", "postgresql://")
+    .replace("boids_db", "boids_test_db")
+    .replace(":5432/", ":5433/")
+)
 
 
 @pytest.mark.asyncio

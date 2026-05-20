@@ -2,9 +2,9 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: boids
-      POSTGRES_PASSWORD: boids
-      POSTGRES_DB: boids
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: boids_db
     ports:
       - "5433:5432"
 

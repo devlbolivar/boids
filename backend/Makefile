@@ -111,3 +111,21 @@ coverage-mvp: test-services
 	       --cov-report=term-missing \
 	       --cov-fail-under=75 \
 	       -m "not slow" -q
+
+# M8: Dashboard de Operaciones
+frontend-install:
+	cd ../dashboard && npm install
+
+frontend-dev:
+	cd ../dashboard && npm run dev
+
+frontend-build:
+	cd ../dashboard && npm run build
+
+test-frontend-unit:
+	cd ../dashboard && npx vitest run tests/unit/
+
+test-m8-backend: test-services
+	pytest tests/integration/test_dashboard_endpoints.py -v --tb=short
+
+test-m8: test-m8-backend test-frontend-unit

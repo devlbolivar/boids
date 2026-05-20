@@ -8,8 +8,8 @@ Boids AI is a monorepo with a multi-tenant FastAPI backend and a Next.js dashboa
 
 ```
 boids-ai/
-├── backend/     # FastAPI — M1-M7 (API, workers, DB, Redis)
-├── dashboard/   # Next.js — M8+ (frontend)
+├── backend/     # FastAPI — M1-M8 (API, workers, DB, Redis)
+├── dashboard/   # Next.js — M8 (frontend: dashboard, review queue, campaigns)
 └── docs/        # Technical milestone documents
 ```
 
@@ -50,11 +50,15 @@ When generating migrations, all models must be imported in `migrations/env.py` s
 
 ```bash
 cd backend
-pytest                                        # Run all tests
-pytest tests/test_auth.py::test_name -v       # Run a single test
+pytest                                                           # Run all tests (124 pass)
+pytest tests/test_auth.py::test_name -v                         # Run a single test
+pytest tests/integration/test_dashboard_endpoints.py -v         # M8 backend tests only
+make test-m8                                                     # M8 backend + frontend unit tests
 ```
 
 Tests require a live PostgreSQL instance. They connect to `boids_test_db` (derived from `DATABASE_URL` by replacing `boids_db`). The test database schema is created and torn down automatically per session via `conftest.py`.
+
+The test engine connects as the postgres superuser, which bypasses `FORCE ROW LEVEL SECURITY`. Direct inserts in tests therefore skip RLS — this is intentional so fixtures can seed data for any tenant. Use `get_tenant_db` in application code to enforce isolation at runtime.
 
 ### Dependencies
 
@@ -68,7 +72,44 @@ poetry add <package>    # Add a new dependency
 
 ## Dashboard (`dashboard/`)
 
-Next.js app — populated starting M8.
+All dashboard commands must be run from the `dashboard/` directory.
+
+### Running locally
+
+```bash
+cd dashboard
+npm install        # first time only
+npm run dev        # dev server on :3000
+```
+
+The frontend expects the backend at `http://localhost:8000` by default. Override with the env var `NEXT_PUBLIC_API_URL`.
+
+### Tests
+
+```bash
+cd dashboard
+npm run test:run   # unit tests (vitest, jsdom)
+```
+
+### Pages
+
+| Route | Description |
+|---|---|
+| `/login` | Auth — stores JWT in localStorage |
+| `/register` | Tenant registration |
+| `/dashboard` | Metrics (leads/emails/meetings) + funnel chart |
+| `/review` | Manual review queue — approve/reject email drafts |
+| `/campaigns` | Campaign list with per-step run buttons |
+
+### Key paths
+
+- `app/(app)/` — authenticated layout with sidebar auth guard
+- `app/(auth)/` — login and register pages
+- `components/dashboard/` — MetricCard, FunnelChart, MeetingsCard, CostCard, DashboardOverview
+- `components/review/EmailPreview.tsx` — approve/reject UI with QA score
+- `components/campaigns/RunButton.tsx` — triggers campaign step via API
+- `lib/api.ts` — axios instance with JWT interceptor and 401 redirect
+- `lib/hooks/` — useDashboard, useReviewQueue TanStack Query hooks
 
 ---
 
@@ -109,3 +150,26 @@ Three named queues exist: `orchestrator`, `agents`, `delivery`. All share the sa
 All settings are in `app/config.py` via `pydantic-settings`. Values are read from environment variables or a `.env` file. Copy `.env.example` to `.env` to get started locally.
 
 Key variables: `DATABASE_URL`, `REDIS_URL`, `SECRET_KEY`, `MASTER_ENCRYPTION_KEY`.
+
+### M8 endpoints
+
+**Dashboard** (`app/dashboard/router.py`) — all require `get_tenant_db` + JWT:
+
+| Endpoint | Description |
+|---|---|
+| `GET /dashboard/summary` | Lead counts by status, email open/reply rates, meeting totals |
+| `GET /dashboard/funnel` | All 8 lead statuses with counts; optional `?campaign_id=` filter |
+| `GET /dashboard/meetings/upcoming` | Future scheduled meetings ordered by date |
+| `GET /dashboard/cost` | Agent run cost breakdown by type (`lead_finder`, `research`, etc.) |
+
+**Review queue** (`app/review/router.py`):
+
+| Endpoint | Description |
+|---|---|
+| `GET /review` | Leads in `needs_review` with their latest email draft |
+| `POST /review/{lead_id}/approve` | Sets status → `emailed`, fires `send_email.delay()` |
+| `POST /review/{lead_id}/reject` | Sets status → `rejected` |
+
+### AgentRun cost model
+
+`AgentRun` lives in `app/tenants/models.py` (not `app/workers/models`). Cost is calculated in `DashboardService.get_cost_summary()` using `AGENT_PRICES` dict keyed by agent type.
