@@ -90,3 +90,24 @@ test-agent-m6: test-services
 # Smoke test del pipeline completo M3→M6 en secuencia
 test-pipeline-smoke: test-services
 	pytest tests/integration/ -k "e2e or pipeline" -v --tb=short -m "not slow"
+
+# M7: Delivery + Scheduler Agent targets
+test-agent-m7: test-services
+	pytest tests/unit/test_intent_classifier.py \
+	       tests/unit/test_scheduler_agent.py \
+	       tests/unit/test_instantly_client.py \
+	       tests/integration/test_delivery_pipeline.py \
+	       tests/integration/test_scheduler_pipeline.py \
+	       -v --tb=short
+
+# Pipeline completo M3→M7 — smoke test del MVP
+test-mvp-smoke: test-services
+	pytest tests/ -k "e2e or pipeline or smoke" \
+	       -v --tb=short -m "not slow"
+
+# Coverage del MVP completo
+coverage-mvp: test-services
+	pytest tests/ --cov=app \
+	       --cov-report=term-missing \
+	       --cov-fail-under=75 \
+	       -m "not slow" -q

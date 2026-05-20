@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     # Qdrant vector database URL
     QDRANT_URL: str = "http://localhost:6333"
 
+    # Instantly.ai (M7: email delivery)
+    INSTANTLY_API_KEY: str = ""
+    INSTANTLY_WEBHOOK_SECRET: str = "default_webhook_secret"
+
+    # Google Calendar OAuth (M7: meeting scheduling)
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

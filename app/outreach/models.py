@@ -28,6 +28,12 @@ class OutreachEmail(Base):
     quality_score: Mapped[float] = mapped_column(Float, nullable=False)
     qa_details: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # M7: Delivery tracking fields
+    instantly_id: Mapped[str | None] = mapped_column(Text, nullable=True, index=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    replied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reply_body: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
     )

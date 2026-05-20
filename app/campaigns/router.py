@@ -186,3 +186,48 @@ async def run_copywriter(
         "leads_queued": count,
     }
 
+
+@router.post("/{campaign_id}/run/send", status_code=status.HTTP_202_ACCEPTED)
+async def run_send_emails(
+    campaign_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    tenant_id: str = Depends(get_current_tenant),
+):
+    """
+    Envía todos los emails aprobados (status='emailed', not yet sent)
+    de una campaña a Instantly.
+    """
+    from sqlalchemy import func, select
+    from app.leads.models import Lead
+    from app.outreach.models import OutreachEmail
+    from app.workers.tasks.delivery import send_campaign_emails
+
+    campaign = await service.get(db, str(campaign_id))
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+    result = await db.execute(
+        select(func.count(OutreachEmail.id))
+        .join(Lead, Lead.id == OutreachEmail.lead_id)
+        .where(
+            Lead.campaign_id == str(campaign_id),
+            Lead.status == "emailed",
+            OutreachEmail.sent_at.is_(None),
+        )
+    )
+    count = result.scalar_one()
+
+    if count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No approved emails pending send. Run copywrite first.",
+        )
+
+    task = send_campaign_emails.delay(str(campaign_id), tenant_id)
+
+    return {
+        "task_id": task.id,
+        "status": "queued",
+        "emails_queued": count,
+    }
+

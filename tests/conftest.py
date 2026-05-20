@@ -9,8 +9,9 @@ from app.core.database import Base
 from app.dependencies import get_db, get_tenant_db, get_current_tenant
 from app.main import app
 from app.outreach.models import OutreachEmail  # noqa: F401 — registers table in Base.metadata
+from app.meetings.models import Meeting  # noqa: F401 — registers table in Base.metadata
 
-TEST_DATABASE_URL = settings.DATABASE_URL.replace("boids_db", "boids_test_db")
+TEST_DATABASE_URL = settings.DATABASE_URL.replace("boids_db", "boids_test_db").replace(":5432/", ":5433/")
 
 
 @pytest_asyncio.fixture
@@ -69,6 +70,13 @@ async def test_engine():
                 USING (tenant_id = current_setting('app.tenant_id')::UUID)
         """))
         await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON outreach_emails TO boids_app"))
+        await conn.execute(text("ALTER TABLE meetings ENABLE ROW LEVEL SECURITY"))
+        await conn.execute(text("ALTER TABLE meetings FORCE ROW LEVEL SECURITY"))
+        await conn.execute(text("""
+            CREATE POLICY meetings_isolation ON meetings
+                USING (tenant_id = current_setting('app.tenant_id')::UUID)
+        """))
+        await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON meetings TO boids_app"))
 
     yield engine, session_factory
 

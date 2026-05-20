@@ -12,6 +12,8 @@ from app.campaigns.router import router as campaigns_router
 from app.leads.router import router as leads_router
 from app.dashboard.router import router as dashboard_router
 from app.knowledge.router import router as knowledge_router
+from app.webhooks.router import router as webhooks_router
+import app.meetings.models  # noqa: F401 — registers Meeting table in Base.metadata
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,6 +46,7 @@ app.include_router(campaigns_router)
 app.include_router(leads_router)
 app.include_router(dashboard_router)
 app.include_router(knowledge_router)
+app.include_router(webhooks_router)
 
 @app.get("/health", tags=["System"])
 async def health_check(db: AsyncSession = Depends(get_db)):
