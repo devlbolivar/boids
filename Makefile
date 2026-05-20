@@ -77,3 +77,16 @@ qdrant-up:
 
 qdrant-down:
 	docker stop boids_qdrant && docker rm boids_qdrant
+
+# M6: Copywriter + QA Agent targets
+test-agent-m6: test-services
+	pytest tests/unit/test_qa_score.py \
+	       tests/unit/test_copywriter_agent.py \
+	       tests/unit/test_qa_agent.py \
+	       tests/unit/test_copywriter_pipeline.py \
+	       tests/integration/test_copywriter_pipeline.py \
+	       -v --tb=short
+
+# Smoke test del pipeline completo M3→M6 en secuencia
+test-pipeline-smoke: test-services
+	pytest tests/integration/ -k "e2e or pipeline" -v --tb=short -m "not slow"

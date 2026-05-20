@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.campaigns.schemas import CampaignCreate, CampaignUpdate, CampaignResponse
 from app.campaigns.service import CampaignService
 from app.dependencies import get_tenant_db, get_current_tenant
+from app.workers.tasks.copywriter import copywrite_campaign_leads
 from app.workers.tasks.lead_finder import find_leads_for_campaign
 from app.workers.tasks.research import research_campaign_leads
 
@@ -130,6 +131,8 @@ async def run_research_agent(
     }
 
 
+
+
 @router.get("/{campaign_id}/run/{task_id}/status")
 async def get_task_status(
     campaign_id: str,
@@ -145,3 +148,41 @@ async def get_task_status(
         "state": task.state,
         "result": task.result if task.ready() else None,
     }
+
+
+@router.post("/{campaign_id}/run/copywrite", status_code=status.HTTP_202_ACCEPTED)
+async def run_copywriter(
+    campaign_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    tenant_id: str = Depends(get_current_tenant),
+):
+    """Despacha el Copywriter + QA Agent para todos los leads 'researched' de la campaña."""
+    from sqlalchemy import func, select
+    from app.leads.models import Lead
+
+    campaign = await service.get(db, str(campaign_id))
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+
+    result = await db.execute(
+        select(func.count(Lead.id)).where(
+            Lead.campaign_id == str(campaign_id),
+            Lead.status == "researched",
+        )
+    )
+    count = result.scalar_one()
+
+    if count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No leads with status 'researched'. Run research first.",
+        )
+
+    task = copywrite_campaign_leads.delay(str(campaign_id), tenant_id)
+
+    return {
+        "task_id": task.id,
+        "status": "queued",
+        "leads_queued": count,
+    }
+

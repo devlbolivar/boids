@@ -12,6 +12,7 @@ from app.tenants.models import Tenant, AgentRun
 from app.campaigns.models import Campaign
 from app.leads.models import Lead
 from app.knowledge.models import KnowledgeDocument  # noqa: F401
+from app.outreach.models import OutreachEmail  # noqa: F401
 
 # this is the Alembic Config object, which provides access to the values within the .ini file in use.
 config = context.config

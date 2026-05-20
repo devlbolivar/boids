@@ -8,6 +8,7 @@ from app.config import settings
 from app.core.database import Base
 from app.dependencies import get_db, get_tenant_db, get_current_tenant
 from app.main import app
+from app.outreach.models import OutreachEmail  # noqa: F401 — registers table in Base.metadata
 
 TEST_DATABASE_URL = settings.DATABASE_URL.replace("boids_db", "boids_test_db")
 
@@ -61,6 +62,13 @@ async def test_engine():
                 USING (tenant_id = current_setting('app.tenant_id')::UUID)
         """))
         await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON knowledge_documents TO boids_app"))
+        await conn.execute(text("ALTER TABLE outreach_emails ENABLE ROW LEVEL SECURITY"))
+        await conn.execute(text("ALTER TABLE outreach_emails FORCE ROW LEVEL SECURITY"))
+        await conn.execute(text("""
+            CREATE POLICY outreach_isolation ON outreach_emails
+                USING (tenant_id = current_setting('app.tenant_id')::UUID)
+        """))
+        await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON outreach_emails TO boids_app"))
 
     yield engine, session_factory
 
