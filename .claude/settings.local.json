@@ -21,7 +21,8 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\\\\tests\\\\unit\" -File | ForEach-Object { $_.Name })",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\\\\tests\\\\integration\" -File | ForEach-Object { $_.Name })",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\\\\app\\\\auth\" -File | ForEach-Object { $_.Name })",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\\\\app\\\\core\" -File | ForEach-Object { $_.Name })"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai\\\\app\\\\core\" -File | ForEach-Object { $_.Name })",
+      "Bash(Get-ChildItem C:\\\\Users\\\\luisb\\\\projects\\\\boids-ai *)"
     ]
   }
 }

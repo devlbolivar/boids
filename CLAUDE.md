@@ -4,13 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Boids AI is a multi-tenant FastAPI backend with schema-based PostgreSQL tenant isolation, Celery background workers, and Redis. All services run via Docker Compose.
+Boids AI is a monorepo with a multi-tenant FastAPI backend and a Next.js dashboard.
 
-## Commands
+```
+boids-ai/
+├── backend/     # FastAPI — M1-M7 (API, workers, DB, Redis)
+├── dashboard/   # Next.js — M8+ (frontend)
+└── docs/        # Technical milestone documents
+```
+
+---
+
+## Backend (`backend/`)
+
+All backend commands must be run from the `backend/` directory.
 
 ### Running the stack
 
 ```bash
+cd backend
 docker compose up --build          # Start all services (API, worker, DB, Redis)
 docker compose up db redis         # Start only infrastructure
 ```
@@ -18,6 +30,7 @@ docker compose up db redis         # Start only infrastructure
 ### Running locally (without Docker)
 
 ```bash
+cd backend
 uvicorn app.main:app --reload      # API on :8000
 celery -A app.workers.celery_app worker --loglevel=info -Q orchestrator,agents,delivery
 ```
@@ -25,6 +38,7 @@ celery -A app.workers.celery_app worker --loglevel=info -Q orchestrator,agents,d
 ### Database migrations (Alembic)
 
 ```bash
+cd backend
 alembic upgrade head                              # Apply all migrations
 alembic revision --autogenerate -m "description" # Generate migration from model changes
 alembic downgrade -1                              # Roll back one migration
@@ -35,6 +49,7 @@ When generating migrations, all models must be imported in `migrations/env.py` s
 ### Tests
 
 ```bash
+cd backend
 pytest                                        # Run all tests
 pytest tests/test_auth.py::test_name -v       # Run a single test
 ```
@@ -44,11 +59,20 @@ Tests require a live PostgreSQL instance. They connect to `boids_test_db` (deriv
 ### Dependencies
 
 ```bash
+cd backend
 poetry install          # Install all dependencies
 poetry add <package>    # Add a new dependency
 ```
 
-## Architecture
+---
+
+## Dashboard (`dashboard/`)
+
+Next.js app — populated starting M8.
+
+---
+
+## Architecture (Backend)
 
 ### Multi-tenancy model
 
